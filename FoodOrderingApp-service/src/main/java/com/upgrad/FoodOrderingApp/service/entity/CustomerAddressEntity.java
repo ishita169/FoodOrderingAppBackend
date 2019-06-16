@@ -1,63 +1,49 @@
 package com.upgrad.FoodOrderingApp.service.entity;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 
 /**
- * Description - Entity class for Customer Address related methods
+ * CustomerAddressEntity class contains all the attributes to be mapped to all the fields in 'customer_address' table in the database
  */
-
 @Entity
 @Table(name = "customer_address")
-public class CustomerAddressEntity {
+public class CustomerAddressEntity implements Serializable {
 
     @Id
-    @NotNull
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    @ManyToOne(fetch = FetchType.EAGER,cascade=CascadeType.ALL)
-    @JoinColumn(name = "customer_id", referencedColumnName = "id")
-    @NotNull
-    private CustomerEntity customerEntity;
-    @ManyToOne (fetch = FetchType.EAGER,cascade=CascadeType.ALL)
-    @JoinColumn(name = "address_id", referencedColumnName = "id")
-    @NotNull
-    private AddressEntity addressEntity;
+    private Integer id;
 
-    public int getId() {
+    @Column(name = "customer_id")
+    @NotNull
+    private Integer customer;
+
+    @Column(name = "address_id")
+    @NotNull
+    private Integer address;
+
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
-    public CustomerEntity getCustomerEntity() {
-        return customerEntity;
+    public Integer getCustomer() {
+        return customer;
     }
 
-    public void setCustomerEntity(CustomerEntity customerEntity) {
-        this.customerEntity = customerEntity;
+    public void setCustomer(Integer customer) {
+        this.customer = customer;
     }
 
-    public AddressEntity getAddressEntity() {
-        return addressEntity;
+    public Integer getAddress() {
+        return address;
     }
 
-    public void setAddressEntity(AddressEntity addressEntity) {
-        this.addressEntity = addressEntity;
-    }
-
-    @Override
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
-    }
-
-    public CustomerAddressEntity(){
-
+    public void setAddress(Integer address) {
+        this.address = address;
     }
 }

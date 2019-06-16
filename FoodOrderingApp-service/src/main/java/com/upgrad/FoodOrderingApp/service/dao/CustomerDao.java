@@ -9,9 +9,8 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
 /**
- * Description - DAO class with operations for the customer table
+ * CustomerDao class provides the database access for all the endpoints in customer controller
  */
-
 @Repository
 public class CustomerDao {
 
@@ -19,76 +18,93 @@ public class CustomerDao {
     private EntityManager entityManager;
 
     /**
-     * Method to create customer in the DB
+     * This method creates new customer from given CustomerEntity object
      *
-     * @param customerEntity CustomerEntity with details of the customer to be created
-     * @return CustomerEntity of the created customer
+     * @param customerEntity the CustomerEntity object from which new customer will be created
+     *
+     * @return CustomerEntity object
      */
-    public CustomerEntity createCustomer(final CustomerEntity customerEntity) {
+    public CustomerEntity createCustomer(CustomerEntity customerEntity) {
         entityManager.persist(customerEntity);
         return customerEntity;
     }
 
     /**
-     * Method to create auth token in DB.
+     * This method helps find existing customer by contact number
      *
-     * @param customerAuthTokenEntity customerAuthTokenEntity with the token to be created
-     * @return UserAuthTokenEntity of the created auth token
-     */
-    public CustomerAuthEntity createAuthToken(final CustomerAuthEntity customerAuthTokenEntity) {
-        entityManager.persist(customerAuthTokenEntity);
-        return customerAuthTokenEntity;
-    }
-
-    /**
-     * Method to find customer by contact number
+     * @param contactNumber the contact number which will be searched in database to find existing customer
      *
-     * @param contact_number Contact number of the customer to be found
-     * @return If the customer is found, return CustomerEntity of the given user, else return null
+     * @return CustomerEntity object if given contact number exists in database
      */
-    public CustomerEntity findCustomerByContactNumber(final String contact_number) {
+    public CustomerEntity getCustomerByContactNumber(String contactNumber) {
         try {
-            String query = "select u from CustomerEntity u where u.contact_number = :contact_number";
-            return entityManager.createQuery(query, CustomerEntity.class)
-                    .setParameter("contact_number", contact_number).getSingleResult();
+            return entityManager.createNamedQuery("customerByContactNumber", CustomerEntity.class).setParameter("contactNumber", contactNumber).getSingleResult();
         } catch (NoResultException nre) {
             return null;
         }
     }
 
     /**
-     * Method to find customer by email in the DB.
+     * This method creates new authorization from given CustomerAuthEntity object
      *
-     * @param email Email id of the customer to be found
-     * @return If the customer is found, return CustomerEntity of the given customer, else return null
+     * @param customerAuthEntity the CustomerAuthEntity object from which new authorization will be created
+     *
+     * @return CustomerAuthEntity object
      */
-    public CustomerEntity findCustomerByEmail(final String email) {
+    public CustomerAuthEntity createCustomerAuth(CustomerAuthEntity customerAuthEntity) {
+        entityManager.persist(customerAuthEntity);
+        return customerAuthEntity;
+    }
+
+    /**
+     * This method helps find existing customer authorization by access token
+     *
+     * @param accessToken the access token which will be searched in database to find customer authorization
+     *
+     * @return CustomerAuthEntity object if given access token exists in database
+     */
+    public CustomerAuthEntity getCustomerAuthByAccessToken(String accessToken) {
         try {
-            String query = "select u from CustomerEntity u where u.email = :email";
-            return entityManager.createQuery(query, CustomerEntity.class)
-                    .setParameter("email", email).getSingleResult();
+            return entityManager.createNamedQuery("customerAuthByAccessToken", CustomerAuthEntity.class).setParameter("accessToken", accessToken).getSingleResult();
         } catch (NoResultException nre) {
             return null;
         }
     }
 
     /**
-     * Method to get CustomerAuthEntity from the db given an access token.
-     * @param access_token String containing access token of customer
-     * @return CustomerAuthEntity containing the given access token
+     * This method updates existing customer authorization
+     *
+     * @param customerAuthEntity CustomerAuthEntity object to update
+     *
+     * @return Updated CustomerAuthEntity object
      */
-    public CustomerAuthEntity findCustomerAuthEntityByAccessToken(final String access_token){
-        try{
-            String query = "select u from CustomerAuthEntity u where u.accessToken = :accessToken";
-            return entityManager.createQuery(query, CustomerAuthEntity.class)
-                    .setParameter("accessToken", access_token).getSingleResult();
+    public CustomerAuthEntity updateCustomerAuth(CustomerAuthEntity customerAuthEntity) {
+        return entityManager.merge(customerAuthEntity);
+    }
+
+    /**
+     * This method updates existing customer
+     *
+     * @param customerEntity CustomerEntity object to update
+     *
+     * @return Updated CustomerEntity object
+     */
+    public CustomerEntity updateCustomerEntity(CustomerEntity customerEntity) {
+        return entityManager.merge(customerEntity);
+    }
+
+    /**
+     * This method returns customer entity for given UUI
+     *
+     * @param uuid customer entity UUID
+     *
+     * @return CustomerEntity object
+     */
+    public CustomerEntity getCustomerByUUID(String uuid) {
+        try {
+            return entityManager.createNamedQuery("customerByUUID", CustomerEntity.class).setParameter("uuid", uuid).getSingleResult();
         } catch (NoResultException nre) {
             return null;
         }
-    }
-
-    public CustomerEntity updateCustomerDetails(final CustomerEntity customerEntity){
-        entityManager.merge(customerEntity);
-        return customerEntity;
     }
 }

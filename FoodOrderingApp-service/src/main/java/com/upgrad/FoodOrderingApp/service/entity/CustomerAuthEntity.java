@@ -3,43 +3,54 @@ package com.upgrad.FoodOrderingApp.service.entity;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.time.ZonedDateTime;
 
 /**
- * Description - Entity class for Customer Auth related methods
+ * CustomerAuthEntity class contains all the attributes to be mapped to all the fields in 'customer_auth' table in the database
  */
-
 @Entity
 @Table(name = "customer_auth")
-public class CustomerAuthEntity {
+@NamedQueries({
+        @NamedQuery(name = "customerAuthByAccessToken", query = "select c from CustomerAuthEntity c where c.accessToken = :accessToken"),
+})
+public class CustomerAuthEntity implements Serializable {
 
     @Id
-    @NotNull
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
+
     @Column(name = "uuid")
     @NotNull
     @Size(max = 200)
     private String uuid;
+
     @ManyToOne
     @JoinColumn(name = "customer_id")
+    @NotNull
     private CustomerEntity customer;
-    @Column(name="access_token")
+
+    @Column(name = "access_token")
+    @NotNull
     @Size(max = 500)
     private String accessToken;
-    @Column(name="login_at")
+
+    @Column(name = "login_at")
+    @NotNull
     private ZonedDateTime loginAt;
-    @Column(name="logout_at")
+
+    @Column(name = "logout_at")
     private ZonedDateTime logoutAt;
-    @Column(name="expires_at")
+
+    @Column(name = "expires_at")
+    @NotNull
     private ZonedDateTime expiresAt;
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

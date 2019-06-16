@@ -13,322 +13,201 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Description - Controller for customer related methods.
- */
-
-@Controller
+@RestController
+@RequestMapping("/")
 public class CustomerController {
 
     @Autowired
-    CustomerService customerService;
+    private CustomerService customerService;
 
     /**
-     * Controller method for the signup endpoint
+     * This api endpoint is used to signup a new customer
      *
-     * @param signupCustomerRequest SignUpCustomerRequest containing customer details
-     * @return ResponseEntity containing the SignUpCUstomerRequest and HTTP Status
-     * @throws SignUpRestrictedException throw SignUpRestrictedException in required cases
+     * @param signupCustomerRequest this argument contains all the attributes required to create a new customer in the database
+     *
+     * @return ResponseEntity<SignupCustomerResponse> type object along with HttpStatus CREATED
+     *
+     * @throws SignUpRestrictedException if customer details are not as per guidelines
      */
     @CrossOrigin
-    @PostMapping(path = "/customer/signup", consumes = MediaType.APPLICATION_JSON_UTF8_VALUE,
-            produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<?> signUp(
+    @RequestMapping(method = RequestMethod.POST, path = "/customer/signup", consumes = MediaType.APPLICATION_JSON_UTF8_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<SignupCustomerResponse> signup(
             @RequestBody(required = false) final SignupCustomerRequest signupCustomerRequest)
-            throws SignUpRestrictedException {
+            throws SignUpRestrictedException
+    {
+        // Validation for required fields
+        if (
+                signupCustomerRequest.getFirstName().equals("") ||
+                        signupCustomerRequest.getEmailAddress().equals("") ||
+                        signupCustomerRequest.getContactNumber().equals("") ||
+                        signupCustomerRequest.getPassword().equals("")
+        ) {
+            throw new SignUpRestrictedException("SGR-005", "Except last name all fields should be filled");
+        }
 
-        // Create customer entity
         final CustomerEntity customerEntity = new CustomerEntity();
-
-        // Set customer details by getting values from signUpCustomerRequest
         customerEntity.setUuid(UUID.randomUUID().toString());
         customerEntity.setFirstName(signupCustomerRequest.getFirstName());
         customerEntity.setLastName(signupCustomerRequest.getLastName());
         customerEntity.setEmail(signupCustomerRequest.getEmailAddress());
-        customerEntity.setContact_number(signupCustomerRequest.getContactNumber());
-        customerEntity.setPassword(signupCustomerRequest.getPassword());
+        customerEntity.setContactNumber(signupCustomerRequest.getContactNumber());
+        customerEntity.setPassoword(signupCustomerRequest.getPassword());
 
-        // Validate password format and length using regex
-        if (!customerEntity.getPassword()
-                .matches("^.*(?=.{8,})(?=..*[0-9])(?=.*[A-Z])(?=.*[#@$%&*!^]).*$")) {
-            throw new SignUpRestrictedException("SGR-004", "Weak password!");
-        }
-
-        // Variables to perform validation
-        String customerExists = String.valueOf(customerService.getCustomerByContactNumber(signupCustomerRequest.getContactNumber()));
-        String contactNumberExists = String.valueOf(signupCustomerRequest.getContactNumber());
-        String firstNameExists = String.valueOf(signupCustomerRequest.getFirstName());
-        String emailExists = String.valueOf(signupCustomerRequest.getEmailAddress());
-        String passwordExists = String.valueOf(signupCustomerRequest.getPassword());
-
-        // If any of the fields except lastName are null or empty, throw exception
-        if (contactNumberExists.equals("null") || contactNumberExists.isEmpty()
-                || firstNameExists.equals("null") || firstNameExists.isEmpty()
-                || emailExists.equals("null") || emailExists.isEmpty()
-                || passwordExists.equals("null") || passwordExists.isEmpty()) {
-            throw new SignUpRestrictedException("SGR-005", "Except last name all fields should be filled");
-        }
-
-        // If any of the fields are null or empty, throw exception
-        // Else if a customer with the same contact number already exists in the DB, throw exception
-        // Else create new customer and return signUpCustomerResponse and corresponding HTTP status
-        if (!customerExists.equals("null")) {
-            throw new SignUpRestrictedException("SGR-001", "This contact number is already registered! Try other contact number.");
-        } else {
-            CustomerEntity createdCustomerEntity = customerService.saveCustomer(customerEntity);
-            SignupCustomerResponse signupCustomerResponse = new SignupCustomerResponse()
-                    .id(createdCustomerEntity.getUuid()).status("CUSTOMER SUCCESSFULLY REGISTERED");
-            return new ResponseEntity<SignupCustomerResponse>(signupCustomerResponse, HttpStatus.CREATED);
-        }
+        final CustomerEntity createdCustomerEntity = customerService.saveCustomer(customerEntity);
+        SignupCustomerResponse customerResponse = new SignupCustomerResponse()
+                .id(createdCustomerEntity.getUuid()).status("CUSTOMER SUCCESSFULLY REGISTERED");
+        return new ResponseEntity<SignupCustomerResponse>(customerResponse, HttpStatus.CREATED);
     }
 
     /**
-     * Controller method for login endpoint
+     * This api endpoint is used to login an existing customer
      *
-     * @param authorization Authorization header for Basic authentication.
-     *                      Format - "Basic email:password"
-     *                      Note: email:password needs to be base64 encoded
-     * @return ResponseEntity with login response, header containing access token and HTTP status
-     * @throws AuthenticationFailedException throw AuthenticationFailedException in required cases
+     * @param authorization customer credentials in 'Basic Base64<contactNumber:password>' format
+     *
+     * @return ResponseEntity<LoginResponse> type object along with HttpStatus OK
+     *
+     * @throws AuthenticationFailedException if customer credentials authentication fails
      */
     @CrossOrigin
-    @PostMapping(path = "/customer/login", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<LoginResponse> login(@RequestHeader("authorization") final String authorization)
-            throws AuthenticationFailedException {
-
-        // Initial validation for basic authentication
-
-        // Split authorization header and validate base64 encoding using regex
-        String splitAuthHeader = authorization.split("Basic ")[1];
-        if (!splitAuthHeader
-                .matches("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$")) {
-            throw new AuthenticationFailedException("ATH-003",
-                    "Incorrect format of decoded customer name and password");
+    @RequestMapping(method = RequestMethod.POST, path = "/customer/login", consumes = MediaType.APPLICATION_JSON_UTF8_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<LoginResponse> login(
+            @RequestHeader("authorization") final String authorization)
+            throws AuthenticationFailedException
+    {
+        byte[] decode;
+        String contactNumber;
+        String customerPassword;
+        try {
+            decode = Base64.getDecoder().decode(authorization.split("Basic ")[1]);
+            String decodedText = new String(decode);
+            String[] decodedArray = decodedText.split(":");
+            contactNumber = decodedArray[0];
+            customerPassword = decodedArray[1];
+        } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
+            throw new AuthenticationFailedException("ATH-003", "Incorrect format of decoded customer name and password");
         }
 
-        // Validate basic authentication formatting in the authorization header
-        if (!authorization.startsWith("Basic")) {
-            throw new AuthenticationFailedException("ATH-003",
-                    "Incorrect format of decoded customer name and password");
-        }
+        CustomerAuthEntity createdCustomerAuthEntity = customerService.authenticate(contactNumber, customerPassword);
 
-        // Decode authorization header after initial validation
-        byte[] decodeAuth = Base64.getDecoder().decode(authorization.split("Basic ")[1]);
-        String decodedAuth = new String(decodeAuth);
-        String[] decodedAuthArray = decodedAuth.split(":");
-
-        // Create instance of CustomerAuthEntity
-        CustomerAuthEntity customerAuthToken = new CustomerAuthEntity();
-
-        // Final basic authentication validation check
-        if (decodedAuthArray.length > 0) {
-            customerAuthToken = customerService
-                    .authenticate(decodedAuthArray[0], decodedAuthArray[1]);
-        } else {
-            throw new AuthenticationFailedException("ATH-003",
-                    "Incorrect format of decoded customer name and password");
-        }
-
-        // Get the associated CustomerEntity
-        CustomerEntity customerEntity = customerAuthToken.getCustomer();
-
-        // Build LoginResponse
         LoginResponse loginResponse = new LoginResponse()
-                .id(customerEntity.getUuid())
-                .firstName(customerEntity.getFirstName())
-                .lastName(customerEntity.getLastName())
-                .contactNumber(customerEntity.getContact_number())
-                .emailAddress(customerEntity.getEmail())
-                .message("LOGGED IN SUCCESSFULLY");
+                .id(createdCustomerAuthEntity.getCustomer()
+                        .getUuid()).message("LOGGED IN SUCCESSFULLY");
 
-        // Add access token to the header
+        loginResponse.setId(createdCustomerAuthEntity.getCustomer().getUuid());
+        loginResponse.setFirstName(createdCustomerAuthEntity.getCustomer().getFirstName());
+        loginResponse.setLastName(createdCustomerAuthEntity.getCustomer().getLastName());
+        loginResponse.setContactNumber(createdCustomerAuthEntity.getCustomer().getContactNumber());
+        loginResponse.setEmailAddress(createdCustomerAuthEntity.getCustomer().getEmail());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("access-token", createdCustomerAuthEntity.getAccessToken());
         List<String> header = new ArrayList<>();
         header.add("access-token");
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("access-token", customerAuthToken.getAccessToken());
-        httpHeaders.setAccessControlExposeHeaders(header);
+        headers.setAccessControlExposeHeaders(header);
 
-        // Return loginResponse, header, and the corresponding HTTP status
-        return new ResponseEntity<LoginResponse>(loginResponse, httpHeaders, HttpStatus.OK);
+        return new ResponseEntity<LoginResponse>(loginResponse, headers, HttpStatus.OK);
     }
 
     /**
-     * Controler method for logout endpoint
+     * This api endpoint is used to logout an existing customer
      *
-     * @param authorization Authorization header. Format - "Bearer access-token"
-     * @return ResponseEntity with logout response and HTTP status
-     * @throws AuthorizationFailedException throw AuthorizationFailedException in required cases
+     * @param authorization customer login access token in 'Bearer <access-token>' format
+     *
+     * @return ResponseEntity<LogoutResponse> type object along with HttpStatus OK
+     *
+     * @throws AuthorizationFailedException if validation on customer access token fails
      */
     @CrossOrigin
-    @PostMapping(path = "/customer/logout", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<LogoutResponse> logOut(@RequestHeader("authorization") final String authorization)
-            throws AuthorizationFailedException {
-        // Split authorization header and get the access token
+    @RequestMapping(method = RequestMethod.POST, path = "/customer/logout", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<LogoutResponse> logout(
+            @RequestHeader("authorization") final String authorization)
+            throws AuthorizationFailedException
+    {
         String accessToken = authorization.split("Bearer ")[1];
-        // Get the associated CustomerAuthEntity
-        CustomerAuthEntity customerAuthEntity = customerService.getCustomerAuth(accessToken);
-
-        // If the the customerAuthEntity is not null and the getLogOutAt field is not null,
-        // throw an error
-        // Else, proceed
-        if (customerAuthEntity != null) {
-            if (customerAuthEntity.getLogoutAt() != null) {
-                throw new AuthorizationFailedException("ATH-002",
-                        "Customer is logged out. Log in again to access this endpoint");
-            }
-
-            // Get expiry time of the associated access token
-            ZonedDateTime expiryTime = customerAuthEntity.getExpiresAt();
-            // Get current time
-            final ZonedDateTime currentTime = ZonedDateTime.now();
-
-            // If the expiry time is not null and is before the current time, throw an error
-            // Else, proceed
-            if (expiryTime != null) {
-                if (expiryTime.isBefore(currentTime)) {
-                    throw new AuthorizationFailedException("ATHR-003",
-                            "Your session is expired. Log in again to access this endpoint");
-                }
-            }
-        }
-
-        // Create the final CustomerAuthEntity instance, and logout the customer
-        CustomerAuthEntity finalCustomerAuthEntity = customerService.logout(accessToken);
-        // Create logout response
-        final LogoutResponse logoutResponse = new LogoutResponse()
-                .id(finalCustomerAuthEntity.getCustomer().getUuid())
-                .message("LOGGED OUT SUCCESSFULLY");
-        // Return response entity with logout response and HTTP status
+        CustomerAuthEntity customerAuthEntity = customerService.logout(accessToken);
+        LogoutResponse logoutResponse = new LogoutResponse()
+                .id(customerAuthEntity.getCustomer().getUuid()).message("LOGGED OUT SUCCESSFULLY");
         return new ResponseEntity<LogoutResponse>(logoutResponse, HttpStatus.OK);
     }
 
     /**
-     * Controller method for update endpoint
+     * This api endpoint is used to update an existing customer
      *
-     * @param access_token Access-token of the customer
-     * @param updateCustomerRequest UpdateCustomerRequest containing the details that need to be updated
-     * @return ResponseEntity with update customer response and HTTP status
-     * @throws AuthorizationFailedException throw AuthorizationFailedException in required cases
-     * @throws UpdateCustomerException      throw UpdateCustomerException in required cases
+     * @param updateCustomerRequest this argument contains all the attributes required to update a customer in the database
+     * @param authorization customer access token in 'Bearer <access-token>' format
+     *
+     * @return ResponseEntity<UpdateCustomerResponse> type object along with HttpStatus OK
+     *
+     * @throws AuthorizationFailedException if validation on customer access token fails
+     * @throws UpdateCustomerException if first name is not provided in updateCustomerRequest param
      */
     @CrossOrigin
-    @PutMapping(path = "/customer", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<UpdateCustomerResponse> update(@RequestHeader("authorization") final String access_token,
-                                                         UpdateCustomerRequest updateCustomerRequest)
-            throws AuthorizationFailedException, UpdateCustomerException {
-        // Validate the input
-        boolean validateInput = customerService.updateCredentialsValidifer(updateCustomerRequest.getFirstName());
-        // Perform authorization validation logic and get the associated CustomerEntity
-        CustomerEntity customerEntity = customerService.getCustomer(access_token);
-
-        // Initialize uuid to am empty String
-        String uuid = "";
-        // Initialize firstName to an empty String
-        String firstName = "";
-        // Initialize lastName to an empty String
-        String lastName = "";
-
-        // If the customerEntity is not null, proceed
-        // Else, throw exception
-        if (customerEntity != null) {
-            // If the input is validated, update the firstName and lastName fields
-            // in customerEntity and set the same for the variables firstName and
-            // lastName
-            // Additionally, use the customerEntity.getUuid() method and assign the
-            // result to the uuid variable
-            if (validateInput) {
-                customerEntity.setFirstName(updateCustomerRequest.getFirstName());
-                firstName = updateCustomerRequest.getFirstName();
-                uuid = customerEntity.getUuid();
-                customerEntity.setLastName(updateCustomerRequest.getLastName());
-                lastName = updateCustomerRequest.getLastName();
-            }
-        } else {
-            throw new AuthorizationFailedException("ATHR-001", "Customer is not logged in");
+    @RequestMapping(method = RequestMethod.PUT, path = "/customer", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<UpdateCustomerResponse> update(
+            @RequestBody(required = false) final UpdateCustomerRequest updateCustomerRequest,
+            @RequestHeader("authorization") final String authorization)
+            throws AuthorizationFailedException, UpdateCustomerException
+    {
+        if (updateCustomerRequest.getFirstName().equals("")) {
+            throw new UpdateCustomerException("UCR-002", "First name field should not be empty");
         }
 
-        // Update the customer details
-        customerService.updateCustomer(customerEntity);
+        String accessToken = authorization.split("Bearer ")[1];
+        CustomerEntity customerEntity = customerService.getCustomer(accessToken);
 
-        // Create update customer response
-        UpdateCustomerResponse updateCustomerResponse = new UpdateCustomerResponse()
-                .id(uuid)
-                .firstName(firstName)
-                .lastName(lastName)
-                .status("CUSTOMER DETAILS UPDATED SUCCESSFULLY");
+        customerEntity.setFirstName(updateCustomerRequest.getFirstName());
+        if (!updateCustomerRequest.getLastName().equals("")) {
+            customerEntity.setLastName(updateCustomerRequest.getLastName());
+        }
 
-        // Return response entity with update customer response and HTTP status
-        return new ResponseEntity<UpdateCustomerResponse>(updateCustomerResponse, HttpStatus.OK);
+        CustomerEntity updatedCustomerEntity = customerService.updateCustomer(customerEntity);
+        UpdateCustomerResponse customerResponse = new UpdateCustomerResponse()
+                .id(updatedCustomerEntity.getUuid()).status("CUSTOMER DETAILS UPDATED SUCCESSFULLY");
+        customerResponse.setFirstName(updatedCustomerEntity.getFirstName());
+        customerResponse.setLastName(updatedCustomerEntity.getLastName());
+        return new ResponseEntity<UpdateCustomerResponse>(customerResponse, HttpStatus.OK);
     }
 
     /**
-     * Controller method for change password endpoint
      *
-     * @param access_token Access-token of the customer
-     * @param updatePasswordRequest UpdatePasswordRequest containing the old and new passwords
-     * @return UpdatePasswordResponse with UUID and HTTP status
-     * @throws UpdateCustomerException in cases where required
-     * @throws AuthorizationFailedException in cases where required
+     * @param updatePasswordRequest this argument contains all the attributes required to update a customer's password in the database
+     * @param authorization customer access token in 'Bearer <access-token>' format
+     *
+     * @return ResponseEntity<UpdatePasswordResponse> type object along with HttpStatus OK
+     *
+     * @throws AuthorizationFailedException if validation on customer access token fails
+     * @throws UpdateCustomerException if old or new password is not provided
      */
     @CrossOrigin
-    @PutMapping(path = "/customer/password", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<UpdatePasswordResponse> updatePassword(@RequestHeader("authorization") final String access_token,
-                                                                 UpdatePasswordRequest updatePasswordRequest)
-            throws UpdateCustomerException, AuthorizationFailedException{
-        // Validate the input
-        boolean validateInput = customerService.updatePasswordValidifier(
+    @RequestMapping(method = RequestMethod.PUT, path = "/customer/password", produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<UpdatePasswordResponse> changePassword(
+            @RequestBody(required = false) final UpdatePasswordRequest updatePasswordRequest,
+            @RequestHeader("authorization") final String authorization)
+            throws AuthorizationFailedException, UpdateCustomerException
+    {
+        if (updatePasswordRequest.getOldPassword().equals("") || updatePasswordRequest.getNewPassword().equals("")) {
+            throw new UpdateCustomerException("UCR-003", "No field should be empty");
+        }
+
+        String accessToken = authorization.split("Bearer ")[1];
+        CustomerEntity customerEntity = customerService.getCustomer(accessToken);
+
+        CustomerEntity updatedCustomerEntity = customerService.updateCustomerPassword(
                 updatePasswordRequest.getOldPassword(),
-                updatePasswordRequest.getNewPassword());
-        // Perform authorization validation logic and get the associated CustomerEntity
-        CustomerEntity customerEntity = customerService.getCustomer(access_token);
+                updatePasswordRequest.getNewPassword(),
+                customerEntity
+        );
 
-        boolean updateAuth = customerService.updatePasswordAuthentication(updatePasswordRequest.getOldPassword(), customerEntity);
-
-        if(customerEntity != null){
-            if (!updatePasswordRequest.getNewPassword()
-                    .matches("^.*(?=.{8,})(?=..*[0-9])(?=.*[A-Z])(?=.*[#@$%&*!^]).*$")) {
-                throw new UpdateCustomerException("UCR-001", "Weak password!");
-            }
-        }
-
-        // Initialize uuid to am empty String
-        String uuid = "";
-
-        if (customerEntity != null && updateAuth) {
-            // If the input is validated, update the firstName and lastName fields
-            // in customerEntity and set the same for the variables firstName and
-            // lastName
-            // Additionally, use the customerEntity.getUuid() method and assign the
-            // result to the uuid variable
-            if (validateInput) {
-                customerService.updateCustomerPassword(
-                        updatePasswordRequest.getNewPassword(),
-                        updatePasswordRequest.getNewPassword(),
-                        customerEntity);
-                uuid = customerEntity.getUuid();
-            }
-        } else {
-            throw new AuthorizationFailedException("ATHR-001", "Customer is not logged in");
-        }
-
-        // Update the customer password
-        customerService.updateCustomer(customerEntity);
-
-        // Create update password response
         UpdatePasswordResponse updatePasswordResponse = new UpdatePasswordResponse()
-                .id(uuid)
+                .id(updatedCustomerEntity.getUuid())
                 .status("CUSTOMER PASSWORD UPDATED SUCCESSFULLY");
-
-        // Return response entity with update password response and HTTP status
         return new ResponseEntity<UpdatePasswordResponse>(updatePasswordResponse, HttpStatus.OK);
     }
 }

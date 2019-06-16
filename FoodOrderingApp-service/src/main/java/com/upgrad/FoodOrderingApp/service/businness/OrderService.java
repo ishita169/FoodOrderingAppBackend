@@ -29,10 +29,13 @@ public class OrderService {
     public CouponEntity getCoupon(String coupon_name, String accessToken) throws AuthorizationFailedException {
 
         CouponEntity couponEntity = null;
-        boolean validateCustomer = customerService.checkCustomer(accessToken);
-        if(validateCustomer){
+        //boolean validateCustomer = customerService.checkCustomer(accessToken);
+        // @Manasa
+        // We should vaidate in Contoroller itself.
+        // Call the customerService.getCustomer from contorller & throw auth exception
+        //if(validateCustomer){
             couponEntity = orderDao.getCouponByName(coupon_name);
-        }
+        //}
         return couponEntity;
     }
 

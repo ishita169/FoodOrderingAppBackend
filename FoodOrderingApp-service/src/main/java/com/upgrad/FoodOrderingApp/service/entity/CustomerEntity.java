@@ -1,58 +1,79 @@
 package com.upgrad.FoodOrderingApp.service.entity;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Description - Entity class for Customer related methods
+ * CustomerEntity class contains all the attributes to be mapped to all the fields in 'customer' table in the database
  */
-
 @Entity
 @Table(name = "customer")
-public class CustomerEntity {
+@NamedQueries({
+        @NamedQuery(name = "customerByContactNumber", query = "select c from CustomerEntity c where c.contactNumber = :contactNumber"),
+        @NamedQuery(name = "customerByUUID", query = "select c from CustomerEntity c where c.uuid = :uuid"),
+})
+public class CustomerEntity implements Serializable {
 
     @Id
-    @NotNull
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
+
+    @Column(name = "uuid")
     @NotNull
-    @Column(name="uuid")
     @Size(max = 200)
     private String uuid;
+
+    @Column(name = "firstname")
     @NotNull
-    @Column(name="firstname")
     @Size(max = 30)
-    private String firstname;
+    private String firstName;
+
     @Column(name = "lastname")
     @Size(max = 30)
-    private String lastname;
-    @Column(name="email")
+    private String lastName;
+
+    @Column(name = "email")
+    @NotNull
     @Size(max = 50)
     private String email;
+
+    @Column(name = "contact_number", unique = true)
     @NotNull
-    @Column(name="contact_number")
     @Size(max = 30)
-    private String contact_number;
+    private String contactNumber;
+
+    @Column(name = "password")
     @NotNull
-    @Column(name="password")
     @Size(max = 255)
     private String password;
-    @NotNull
+
     @Column(name = "salt")
+    @NotNull
     @Size(max = 255)
     private String salt;
 
+    @OneToMany
+    @JoinTable(name = "customer_address", joinColumns = @JoinColumn(name = "customer_id"),
+            inverseJoinColumns = @JoinColumn(name = "address_id"))
+    private List<AddressEntity> addresses = new ArrayList<>();
 
-    public int getId() {
+    public List<AddressEntity> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<AddressEntity> addresses) {
+        this.addresses = addresses;
+    }
+
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -65,19 +86,19 @@ public class CustomerEntity {
     }
 
     public String getFirstName() {
-        return firstname;
+        return firstName;
     }
 
-    public void setFirstName(String firstname) {
-        this.firstname = firstname;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
     public String getLastName() {
-        return lastname;
+        return lastName;
     }
 
-    public void setLastName(String lastname) {
-        this.lastname = lastname;
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     public String getEmail() {
@@ -88,19 +109,19 @@ public class CustomerEntity {
         this.email = email;
     }
 
-    public String getContact_number() {
-        return contact_number;
+    public String getContactNumber() {
+        return contactNumber;
     }
 
-    public void setContact_number(String contact_number) {
-        this.contact_number = contact_number;
+    public void setContactNumber(String contactNumber) {
+        this.contactNumber = contactNumber;
     }
 
-    public String getPassword() {
+    public String getPassoword() {
         return password;
     }
 
-    public void setPassword(String password) {
+    public void setPassoword(String password) {
         this.password = password;
     }
 
@@ -110,14 +131,5 @@ public class CustomerEntity {
 
     public void setSalt(String salt) {
         this.salt = salt;
-    }
-
-    @Override
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
-    }
-
-    public CustomerEntity(){
-
     }
 }
