@@ -1,9 +1,6 @@
 package com.upgrad.FoodOrderingApp.service.dao;
 
-import com.upgrad.FoodOrderingApp.service.entity.AddressEntity;
-import com.upgrad.FoodOrderingApp.service.entity.CustomerEntity;
-import com.upgrad.FoodOrderingApp.service.entity.OrderEntity;
-import com.upgrad.FoodOrderingApp.service.entity.RestaurantEntity;
+import com.upgrad.FoodOrderingApp.service.entity.*;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
@@ -76,4 +73,19 @@ public class OrderDao {
             return null;
         }
     }
+
+    /**
+     * Gets the coupon details for a particular coupon name
+     * @param couponName Name of coupon to searched
+     * @return CouponEntity object
+     */
+    public CouponEntity getCouponByName(final String couponName) {
+        try {
+            return entityManager.createNamedQuery("couponByCouponName", CouponEntity.class).setParameter("coupon_name", couponName).getSingleResult();
+        }
+        catch (NoResultException nre) {
+            return null;
+        }
+    }
+
 }
