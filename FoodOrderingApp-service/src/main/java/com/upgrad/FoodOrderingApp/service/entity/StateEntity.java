@@ -29,6 +29,11 @@ public class StateEntity {
     @Size(max = 30)
     private String state_name;
 
+    public StateEntity(String stateUuid, String state) {
+        setUuid(stateUuid);
+        setState_name(state);
+    }
+
     public int getId() {
         return id;
     }
