@@ -5,8 +5,9 @@ import com.upgrad.FoodOrderingApp.service.dao.OrderDao;
 import com.upgrad.FoodOrderingApp.service.entity.CouponEntity;
 import com.upgrad.FoodOrderingApp.service.exception.AuthorizationFailedException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-
+@Service
 public class OrderService {
 
     @Autowired
