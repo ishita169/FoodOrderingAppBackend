@@ -2,7 +2,8 @@
 Food Ordering App - Backend Part
 
 
-address-controller : Address Controller Show/Hide List Operations Expand Operations
+address-controller : Address Controller 
+------------------------------------------
 POST /address
 saveAddress
 
@@ -15,14 +16,16 @@ deleteSavedAddress
 GET /states
 getAllStates
 
-category-controller : Category Controller Show/Hide List Operations Expand Operations
+category-controller : Category Controller
+--------------------------------------------
 GET /category
 getAllCategories
 
 GET /category/{category_id}
 getCategoryById
 
-customer-controller : Customer Controller Show/Hide List Operations Expand Operations
+customer-controller : Customer Controller 
+------------------------------------------
 PUT /customer
 update
 
@@ -38,11 +41,13 @@ changePassword
 POST /customer/signup
 signup
 
-item-controller : Item Controller Show/Hide List Operations Expand Operations
+item-controller : Item Controller 
+---------------------------------------
 GET /item/restaurant/{restaurant_id}
 getItemsByPopularity
 
-order-controller : Order Controller Show/Hide List Operations Expand Operations
+order-controller : Order Controller
+---------------------------------------
 GET /order
 getPastOrdersByCustomer
 
@@ -52,11 +57,14 @@ saveOrderByCustomer
 GET /order/coupon/{coupon_name}
 getCoupon
 
-payment-controller : Payment Controller Show/Hide List Operations Expand Operations
+payment-controller : Payment Controller 
+----------------------------------------
+
 GET /payment
 getAllPaymentMethods
 
-restaurant-controller : Restaurant Controller Show/Hide List Operations Expand Operations
+restaurant-controller : Restaurant Controller 
+----------------------------------------------
 GET /restaurant
 getAllRestaurants
 
