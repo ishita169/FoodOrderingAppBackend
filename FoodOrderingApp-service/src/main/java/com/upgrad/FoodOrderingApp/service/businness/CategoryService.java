@@ -14,10 +14,10 @@ public class CategoryService {
 	private CategoryDao categoryDao;
 	
 	public List<CategoryEntity> getAllCategory(){
-		return categoryDao.getAllCategory();
+		return categoryDao.getAllCategories();
 	}
 	
 	public CategoryEntity getCategory(String categoryId){
-		return categoryDao.getCategory(categoryId);
+		return categoryDao.getCategoryByUuid(categoryId);
 	}
 }
