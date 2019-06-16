@@ -56,7 +56,7 @@ public class OrderController {
         } else {
 
                      couponDetailsResponse.id(UUID.fromString(couponDetails.getUuid()))
-                    .couponName(couponDetails.getCoupon_name())
+                    .couponName(couponDetails.getCouponName())
                     .percent(couponDetails.getPercent());
         }
 
