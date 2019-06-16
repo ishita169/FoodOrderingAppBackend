@@ -1,44 +1,47 @@
 package com.upgrad.FoodOrderingApp.service.entity;
 
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
- * Description - Entity class for State related methods
+ * StateEntity class contains all the attributes to be mapped to all the fields in 'state' table in the database
  */
-
 @Entity
 @Table(name = "state")
-public class StateEntity {
+@NamedQueries({
+        @NamedQuery(name = "stateByUUID", query = "select c from StateEntity c where c.uuid = :uuid"),
+        @NamedQuery(name = "allStates", query = "select q from StateEntity q"),
+})
+public class StateEntity implements Serializable {
 
     @Id
-    @NotNull
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
+
     @Column(name = "uuid")
     @NotNull
     @Size(max = 200)
     private String uuid;
-    @Column(name = "state_name")
-    @Size(max = 30)
-    private String state_name;
 
-    public StateEntity(String stateUuid, String state) {
-        setUuid(stateUuid);
-        setState_name(state);
+    @Column(name = "state_name")
+    @NotNull
+    @Size(max = 30)
+    private String statename;
+
+    public StateEntity() {}
+
+    public StateEntity(String uuid, String name) {
+        this.uuid = uuid;
+        this.statename = name;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -50,20 +53,12 @@ public class StateEntity {
         this.uuid = uuid;
     }
 
-    public String getState_name() {
-        return state_name;
+    public String getStatename() {
+        return statename;
     }
 
-    public void setState_name(String state_name) {
-        this.state_name = state_name;
+    public void setStatename(String statename) {
+        this.statename = statename;
     }
 
-    @Override
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
-    }
-
-    public StateEntity(){
-
-    }
 }
