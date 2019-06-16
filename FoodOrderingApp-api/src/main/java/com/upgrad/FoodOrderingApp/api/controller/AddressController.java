@@ -132,11 +132,11 @@ public class AddressController {
 
                 addressListState.setId(UUID.fromString(initialAddressList.get(i).getState().getUuid()));
 
-                addressListState.setStateName(initialAddressList.get(i).getState().getState_name());
+                addressListState.setStateName(initialAddressList.get(i).getState().getStatename());
 
                 addressListEl.setId(UUID.fromString(uuid));
                 addressListEl.setCity(initialAddressList.get(i).getCity());
-                addressListEl.setFlatBuildingName(initialAddressList.get(i).getFlat_buil_number());
+                addressListEl.setFlatBuildingName(initialAddressList.get(i).getFlatBuilNo());
                 addressListEl.setLocality(initialAddressList.get(i).getLocality());
                 addressListEl.setPincode(initialAddressList.get(i).getPincode());
                 addressListEl.setState(addressListState);
@@ -193,7 +193,7 @@ public class AddressController {
                 String uuid = stateEntityList.get(i).getUuid();
 
                 statesListEl.setId(UUID.fromString(uuid));
-                statesListEl.setStateName(stateEntityList.get(i).getState_name());
+                statesListEl.setStateName(stateEntityList.get(i).getStatename());
                 statesListResponse.addStatesItem(statesListEl);
             }
         } else {
