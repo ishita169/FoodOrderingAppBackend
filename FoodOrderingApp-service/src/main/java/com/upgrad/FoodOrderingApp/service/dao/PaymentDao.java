@@ -1,31 +1,47 @@
 package com.upgrad.FoodOrderingApp.service.dao;
 
-import java.util.List;
+import com.upgrad.FoodOrderingApp.service.entity.PaymentEntity;
+import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import org.springframework.stereotype.Repository;
-import com.upgrad.FoodOrderingApp.service.entity.PaymentEntity;
+import java.util.List;
 
+/**
+ * PaymentDao class provides the database access for all the endpoints in payment controller
+ */
 @Repository
 public class PaymentDao {
-	
+
 	@PersistenceContext
-	private EntityManager entitymanager;
-	
+	private EntityManager entityManager;
+
 	/**
-	 * This method finds all PaymentMethod
+	 * This method helps find all available payment methods
 	 *
 	 * @return List<PaymentEntity> object
 	 */
-	public List<PaymentEntity> getAllPaymentMethod() {
+	public List<PaymentEntity> getAllPaymentMethods() {
 		try {
-		return entitymanager.createNamedQuery("allPaymentMethods", PaymentEntity.class).getResultList();	
-			
+			return entityManager.createNamedQuery("allPaymentMethods", PaymentEntity.class).getResultList();
 		} catch (NoResultException nre) {
 			return null;
 		}
 	}
 
+	/**
+	 * Returns payment entity for a given UUID
+	 *
+	 * @param uuid UUID of payment entity
+	 *
+	 * @return PaymentEntity object
+	 */
+	public PaymentEntity getPaymentByUUID(String uuid) {
+		try {
+			return entityManager.createNamedQuery("paymentByUUID", PaymentEntity.class).setParameter("uuid", uuid).getSingleResult();
+		} catch (NoResultException nre) {
+			return null;
+		}
+	}
 }
