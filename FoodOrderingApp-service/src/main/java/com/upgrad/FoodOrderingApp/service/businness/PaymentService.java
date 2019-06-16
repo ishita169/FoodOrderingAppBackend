@@ -19,7 +19,7 @@ public class PaymentService {
 	 *
 	 * @return List<PaymentEntity> object
 	 */
-	public List<PaymentEntity> getAllPaymentMethodByName() {
+	public List<PaymentEntity> getAllPaymentMethods() {
 		
 		return paymentDao.getAllPaymentMethod().stream()
 				.sorted(Comparator.comparing(PaymentEntity::getPaymentName))

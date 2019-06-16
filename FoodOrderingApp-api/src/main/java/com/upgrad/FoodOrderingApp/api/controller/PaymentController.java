@@ -35,10 +35,10 @@ public class PaymentController {
 	
 
 	
-	public ResponseEntity<PaymentListResponse> getAllPaymentDetails() {
+	public ResponseEntity<PaymentListResponse> getAllPaymentMethods() {
 
-		// get all categories ordered by name
-		List<PaymentEntity> paymentEntityList = patymentService.getAllPaymentMethodByName();
+		// get all payment method.
+		List<PaymentEntity> paymentEntityList = patymentService.getAllPaymentMethods();
 
 		// create response
 		PaymentListResponse paymentListResponse= new PaymentListResponse();
